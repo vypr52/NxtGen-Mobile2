@@ -1,0 +1,19 @@
+{
+  "name": "nxtgen-mobile",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "prep": "node prep.js",
+    "serve": "npx serve .",
+    "android": "node prep.js && npx cap sync android && node lock-landscape.js && npx cap open android",
+    "ios": "node prep.js && npx cap sync ios && node lock-landscape.js && npx cap open ios"
+  },
+  "dependencies": {
+    "@capacitor/core": "^7.0.0",
+    "@capacitor/android": "^7.0.0",
+    "@capacitor/ios": "^7.0.0"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.0.0"
+  }
+}

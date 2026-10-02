@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="theme-color" content="#20232b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; media-src blob:">
+<title>NxtGen</title>
+<style>
+:root{--bg:#20232b;--panel:#2a2e38;--line:#3a3f4c;--text:#e6e9f0;--dim:#8b92a5}
+*{box-sizing:border-box}
+body{margin:0;height:100dvh;display:flex;flex-direction:column;background:var(--bg);color:var(--text);font:14px/1.4 "Segoe UI",system-ui,sans-serif}
+header{display:flex;gap:12px;align-items:center;padding:10px 14px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
+header span{white-space:nowrap}
+#brand{font-size:16px;letter-spacing:.12em;color:#8d99ff}
+#midiNote{max-width:230px;overflow:hidden;text-overflow:ellipsis}
+button,input,select{font:inherit;color:inherit;background:var(--bg);border:1px solid var(--line);border-radius:6px;padding:6px 10px}
+button{cursor:pointer}
+:focus-visible{outline:2px solid #8d99ff;outline-offset:2px}
+#play{min-width:76px;font-weight:600}
+#play.on{background:#06d6a0;color:#0b2a22;border-color:#06d6a0}
+#bpm{width:64px;text-align:right;font-variant-numeric:tabular-nums}
+label{color:var(--dim)}
+#status{margin-left:auto;color:#ffd166}
+.meter{margin-left:12px;width:140px;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.meter i{display:block;height:100%;width:0;background:#06d6a0}
+#eq{display:flex;align-items:center;gap:14px;margin:14px 14px 0;padding:8px 12px;background:var(--panel);border-radius:8px}
+#eqName{color:var(--dim);min-width:64px}
+#bands{display:flex;flex:1;justify-content:space-between}
+#bands label{display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--dim);font-size:12px}
+#bands input{writing-mode:vertical-lr;direction:rtl;width:22px;height:76px;padding:0;border:0;background:none;accent-color:#8d99ff}
+[hidden]{display:none!important}
+#session,#recording{flex:1;min-height:0;overflow:auto}
+#recording{padding:14px}
+.rbar{display:flex;align-items:center;gap:12px}
+#rec{min-width:96px;font-weight:600}
+#rec.on{background:#ef476f;color:#1a0b10;border-color:#ef476f}
+#clock{font-variant-numeric:tabular-nums;min-width:48px}
+#view.live{border-color:#ef476f;color:#ef476f}
+#takes{display:grid;gap:8px;margin-top:14px}
+.take{display:flex;align-items:center;gap:12px;padding:8px 12px;background:var(--panel);border-radius:8px}
+.take span{min-width:130px}
+.take a{color:var(--text)}
+audio{flex:1;height:36px;color-scheme:dark}
+#empty{color:var(--dim)}
+#layers{display:grid;grid-template-columns:repeat(6,1fr);gap:6px;padding:14px}
+#recording #grid{padding:14px 0}
+#recording #editor{margin:0 0 14px}
+#grid{display:grid;grid-template-columns:repeat(6,1fr) 52px;gap:6px;padding:14px}
+.head{display:flex;flex-direction:column;gap:4px;min-width:0}
+.head .nm{font-weight:600;color:var(--c)}
+.head button,.head select,.head input{width:100%;min-width:0;font-size:12px;padding:3px 6px}
+.head button{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.head label{display:flex;align-items:center;gap:6px;color:var(--dim);font-size:12px}
+.ms{display:flex;gap:4px}
+.ms button{flex:1;font-size:11px;padding:2px 0;font-weight:700}
+.ms button.on{background:#ef476f;color:#14161b;border-color:#ef476f}
+.ms button.arm,.head .armR.arm{background:#ef476f;color:#fff;border-color:#ff8fa3;box-shadow:0 0 8px #ef476f88}
+.head .armR{font-size:11px;font-weight:700;padding:2px 0;margin-top:2px}
+@keyframes armpulse{50%{filter:brightness(1.7);box-shadow:0 0 12px #ef476f}}
+body.rec .ms button.arm,body.rec .head .armR.arm{animation:armpulse 1s ease-in-out infinite}
+#armedInfo{color:var(--dim);font-size:12px}
+#midi{max-width:180px}
+#midiNote{font-size:12px}
+#piano{position:relative;height:96px;margin:10px 14px;border-radius:8px;background:var(--panel);border:1px solid var(--line);overflow:hidden;flex:none;touch-action:none;user-select:none}
+#piano .wk{position:absolute;top:0;bottom:0;background:linear-gradient(#fff,#d8dbe2);border:1px solid #565b66;border-radius:0 0 4px 4px;cursor:pointer}
+#piano .bk{position:absolute;top:0;height:58%;background:linear-gradient(#3a3f4c,#14161b);border:1px solid #000;border-radius:0 0 3px 3px;z-index:2;cursor:pointer}
+#piano .wk.on{background:var(--pc,#8d99ff)}
+#piano .bk.on{background:var(--pc,#8d99ff);border-color:var(--pc,#8d99ff)}
+#piano .wk span{position:absolute;bottom:2px;left:0;right:0;text-align:center;font-size:9px;color:#565b66;pointer-events:none}
+#pianoOct{position:absolute;top:4px;right:8px;z-index:3;font-size:11px;color:var(--dim);background:var(--bg);border:1px solid var(--line);border-radius:4px;padding:1px 6px;pointer-events:none}
+.head .midi{font-size:16px;line-height:1;padding:4px 0;text-align:center}
+.head .midi.on{background:var(--c);color:#14161b;border-color:var(--c)}
+.head .fx{display:flex;flex-direction:column;gap:0;min-width:0}
+.head .fx span{font-size:10px;color:var(--dim);letter-spacing:.04em}
+.head input[type=range]{width:100%;height:14px;padding:0;border:0;background:none;accent-color:var(--c);cursor:pointer}
+.clip,.scene{height:48px}
+.clip{text-align:left;background:var(--panel);color:var(--c);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.clip.full{background:color-mix(in srgb,var(--c) 22%,var(--bg))}
+.clip.on{background:var(--c);color:#14161b}
+.clip.q{outline:2px dashed var(--c);outline-offset:-2px}
+.clip.sel{border-color:var(--text)}
+#sceneBar{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:14px 14px 0}
+.sceneBtn{height:42px;font-weight:700;letter-spacing:.06em;background:var(--panel);color:var(--c);border:1px solid var(--line)}
+.sceneBtn:hover{border-color:var(--c)}
+.sceneBtn.on{background:var(--c);color:#14161b;border-color:var(--c)}
+.sceneBtn.q{outline:2px dashed var(--c);outline-offset:-3px}
+.sceneRename{width:100%;height:42px;text-transform:uppercase;text-align:center;font-weight:700;letter-spacing:.06em}
+.sceneBtn i.saved{position:absolute;top:4px;right:5px;width:8px;height:8px;border-radius:50%;background:#06d6a0;box-shadow:0 0 6px #06d6a0}
+.sceneBtn{position:relative}
+.sceneBtn.cur{border-color:var(--c);box-shadow:0 0 0 1px var(--c)}
+#sceneTools{display:flex;align-items:center;gap:16px;padding:8px 14px 0}
+#fadeSec{width:56px;text-align:right}
+#saveScene{font-weight:600;background:var(--panel)}
+#sceneSel{color:var(--dim);font-size:12px}
+#editor{margin:0 14px 14px;padding:12px;background:var(--panel);border-radius:8px}
+#steps{display:grid;grid-template-columns:repeat(16,1fr);gap:4px;margin-top:8px}
+.step{height:40px;padding:0}
+.step.beat{border-color:var(--dim)}
+.step.on{background:var(--c);border-color:var(--c)}
+.step.now{outline:2px solid var(--text);outline-offset:1px}
+
+/* ---- pads ---- */
+#padPanel{left:50%;bottom:14px;transform:translateX(-50%);width:min(1180px,96vw);max-height:calc(100vh - 80px);overflow:auto;z-index:50}
+#padHead{cursor:move;user-select:none}
+#padHead span{font-size:12px;color:var(--dim)}
+#padsBtn.on{background:#06d6a0;color:#0b2a22;border-color:#06d6a0}
+#padBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+#padPanel .pHead strong{color:#8d99ff;letter-spacing:.08em}
+#padBar input[type=range]{width:110px;padding:0;border:0;background:none;accent-color:#8d99ff;cursor:pointer}
+#padGrid{display:grid;grid-template-columns:repeat(8,1fr);gap:8px}
+.padCard{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pad{position:relative;height:68px;font-size:18px;font-weight:700;background:color-mix(in srgb,var(--c) 22%,var(--bg));color:var(--c);border:1px solid var(--line);border-radius:10px;touch-action:none;user-select:none;-webkit-user-select:none}
+.pad.empty{opacity:.55}
+.pad.on,.pad.latched{background:var(--c);color:#14161b;box-shadow:0 0 14px var(--c)}
+@keyframes padpulse{50%{filter:brightness(1.35)}}
+.pad.latched{animation:padpulse 1.6s ease-in-out infinite;outline:2px solid var(--text);outline-offset:1px}
+.pad small{position:absolute;top:3px;left:7px;font-size:10px;font-weight:400;opacity:.7}
+.padCard .row2{display:flex;gap:4px}
+.padCard select,.padCard button.pl{width:100%;min-width:0;font-size:12px;padding:3px 6px}
+.padCard button.pl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.padCard.drag .pad{outline:2px dashed var(--c);outline-offset:2px}
+
+/* ---- login lock screen ---- */
+body.locked>*:not(#lock){display:none!important}
+#lock{display:none;position:fixed;inset:0;z-index:100;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 30%,#2b2f3d,#14161b)}
+body.locked #lock{display:flex}
+#lockForm{width:340px;max-width:92vw;display:flex;flex-direction:column;gap:10px;padding:26px;background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px #0008}
+#lockLogo{height:110px;margin:0 auto 4px;display:block}
+#lockTitle{text-align:center;font-size:20px;letter-spacing:.1em;margin:0}
+#lockTitle b{color:#00eeff;font-weight:600}
+#lockSub{text-align:center;color:var(--dim);font-size:12px;margin:0 0 4px}
+#lockForm input{width:100%;padding:9px 10px}
+#lockGo{background:linear-gradient(90deg,#ff0080,#7b2fbe 55%,#00eeff);color:#fff;border:0;font-weight:700;padding:10px}
+#lockSwap{background:none;border:0;color:#8d99ff;padding:2px;font-size:12px}
+#lockErr{color:#ef476f;min-height:18px;font-size:12px;text-align:center;margin:0}
+#who{color:var(--dim);font-size:12px}
+#logout{font-size:12px}
+/* ---- floating panels: audio interface + AI ---- */
+.pop{position:fixed;z-index:60;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 14px 40px #0009;padding:12px;display:flex;flex-direction:column;gap:8px}
+.pop .pHead{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.pop .pHead button{padding:2px 8px}
+.pop label{display:flex;flex-direction:column;gap:3px;color:var(--dim);font-size:12px}
+.pop label.inl{flex-direction:row;align-items:center;gap:6px}
+.pop select{width:100%}
+.pop .row{display:flex;gap:14px;flex-wrap:wrap}
+.pop .hint{color:var(--dim);font-size:11px;margin:0}
+#audioPanel{top:56px;right:14px;width:340px}
+#aoInfo{display:grid;grid-template-columns:auto 1fr;gap:2px 12px;margin:0;font-size:12px}
+#aoInfo dt{color:var(--dim)}#aoInfo dd{margin:0;text-align:right;font-variant-numeric:tabular-nums}
+.imeter{width:100%;height:8px;background:var(--bg);border-radius:4px;overflow:hidden}
+.imeter i{display:block;height:100%;width:0;background:#06d6a0}
+#aiBtn{background:linear-gradient(90deg,#ff0080,#7b2fbe);border:0;color:#fff;font-weight:700}
+#aiPanel{right:14px;bottom:14px;width:370px;height:500px;max-height:calc(100vh - 80px)}
+#aiPanel .pHead strong{background:linear-gradient(90deg,#ff5fa8,#00eeff);-webkit-background-clip:text;background-clip:text;color:transparent}
+#aiMode{font-size:11px;padding:1px 8px;border-radius:10px;border:1px solid var(--line);color:var(--dim)}
+#aiMode.on{color:#06d6a0;border-color:#06d6a0}#aiMode.off{color:#ffd166;border-color:#ffd166}
+#aiLog{flex:1;min-height:0;overflow:auto;display:flex;flex-direction:column;gap:6px;padding:2px}
+.msg{max-width:88%;padding:7px 10px;border-radius:10px;white-space:pre-wrap;word-break:break-word;font-size:13px}
+.msg.me{align-self:flex-end;background:#3b4160}
+.msg.ai{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}
+.msg.did{align-self:flex-start;background:none;color:var(--dim);font-size:11px;padding:0 4px}
+#aiChips{display:flex;gap:6px;flex-wrap:wrap}
+#aiChips button{font-size:11px;padding:3px 8px;border-radius:12px;color:var(--dim)}
+#aiMic{padding:6px 10px}#aiMic.rec{background:#ef476f;border-color:#ff8fa3;animation:armpulse 1s ease-in-out infinite}#aiMic.busy{opacity:.6}
+#vStat{min-height:14px}
+#aiRow{display:flex;gap:6px}#aiRow input{flex:1;min-width:0}
+#aiSet{display:none;flex-direction:column;gap:6px;padding:8px;background:var(--bg);border-radius:8px}
+#aiSet.open{display:flex}
+
+/* ---- mobile ---- */
+html{-webkit-text-size-adjust:100%}
+body{padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+button,select,input{touch-action:manipulation;min-height:36px}
+header{position:sticky;top:0;z-index:20;gap:8px;padding:8px 10px}
+#more summary{cursor:pointer;color:var(--dim)}
+#saveSceneBtn{font-weight:600;background:var(--panel)}
+#aiMic,#aiGear{display:none}
+#session{-webkit-overflow-scrolling:touch}
+#grid #editor,#editor{margin:0 14px 14px}
+#layers{grid-template-columns:repeat(6,minmax(112px,1fr));overflow-x:auto}
+@media (max-width:700px){
+  #brand{display:none}
+  #sceneBar{padding:10px 8px 0;gap:4px}.sceneBtn{font-size:11px;letter-spacing:0;padding:0 2px}
+  #sceneTools{flex-wrap:wrap;gap:8px 14px;padding:8px 8px 0}
+  #grid{padding:10px 8px;gap:4px}.clip,.scene{height:52px}.clip{padding:0 4px;font-size:12px}
+  .head .nm{font-size:11px;overflow:hidden;text-overflow:ellipsis}
+  #editor{margin:0 8px 12px}#steps{grid-template-columns:repeat(8,1fr)}.step{height:44px}
+  #eq{margin:0 8px;flex-wrap:wrap;gap:8px}#bands{overflow-x:auto;gap:8px;min-width:0}#bands label{min-width:26px}
+  #layers{padding:10px 8px}
+  #padPanel{width:98vw;bottom:6px}#padGrid{grid-template-columns:repeat(4,1fr)}.pad{height:64px}
+  #audioPanel{left:6px;right:6px;top:56px;width:auto;max-height:80dvh;overflow:auto}
+  #aiPanel{left:6px;right:6px;bottom:6px;width:auto;height:70dvh}
+}
+
+/* clip grid + step editor removed from the front screen */
+#grid,#editor{display:none!important}
+
+/* ---- pop-up keyboard ---- */
+#keyPanel{left:50%;bottom:6px;transform:translateX(-50%);width:min(900px,98vw);z-index:55;padding:8px}
+#pianoScroll{overflow-x:auto;overflow-y:hidden;-webkit-overflow-scrolling:touch;border-radius:8px}
+#keyPanel #piano{width:1768px;height:130px;margin:0}
+#pianoOct{display:none}
+#keysBtn.on{background:#8d99ff;color:#14161b;border-color:#8d99ff}
+
+/* ---- landscape only: portrait phones get a rotate prompt ---- */
+#rotate{display:none;position:fixed;inset:0;z-index:200;background:#14161b;color:#e6e9f0;text-align:center;align-items:center;justify-content:center;font-size:20px;line-height:1.5}
+#rotate small{color:#8b92a5;font-size:13px}
+@media (orientation:portrait) and (max-width:700px){#rotate{display:flex}}
+</style>
+</head>
+<body>
+<div id="rotate"><div>Turn your phone sideways<br><small>NxtGen is built for landscape</small></div></div>
+<header>
+  <strong id="brand">NxtGen</strong>
+  <button id="play">Play</button>
+  <label>BPM <input id="bpm" type="number" value="120" min="40" max="220" inputmode="numeric"></label>
+  <button id="saveRig" title="Save the whole rig (SoundFonts, scenes, layers, EQ, tempo, pads) to a file">Save Rig</button>
+  <button id="loadRig" title="Load a saved rig file">Load Rig</button><input type="file" id="rigFile" hidden>
+  <button id="padsBtn" title="Pads">Pads</button>
+  <button id="keysBtn" title="Show or hide the on-screen keyboard">Keys</button>
+  <button id="audioBtn" title="Audio interface">Audio</button>
+  <button id="aiBtn" title="Assistant">✦ AI</button>
+  <button id="test" title="Test tone">Test</button>
+  <details id="more"><summary>MIDI</summary><label>MIDI <select id="midi"><option>MIDI input…</option></select></label> <button id="midiScan">↻</button> <span id="midiNote" style="color:var(--dim)"></span></details>
+  <span id="status"></span>
+  <div class="meter" title="Master level"><i></i></div>
+</header>
+<div id="sceneBar"></div>
+<div id="sceneTools"><label title="How long the faders, pan, filter, sends and EQ take to glide when you switch scenes">Fade <input id="fadeSec" type="number" min="0" max="30" step="0.5" value="2"> s</label><label title="Off = scene buttons only change the mix. Use the row triangles to start clips."><input type="checkbox" id="sceneLaunch"> also launch clips</label><button id="saveSceneBtn" title="Save this scene's mixer/FX and EQ">Save Scene</button><span id="sceneSel"></span></div>
+<div id="session">
+<main id="grid"></main>
+<section id="editor"><div id="title"></div><div id="steps"></div></section>
+<section id="eq"><span id="eqName">Master EQ</span><div id="bands"></div><button id="eqReset" title="Reset all bands to 0 dB">Flat</button></section>
+<main id="layers"></main>
+</div>
+<section id="padPanel" class="pop" hidden>
+  <div class="pHead" id="padHead" title="Drag to move"><strong>Pads</strong><span id="padHint">Hold to play. Double-click to latch, double-click again to fade out.</span><span style="flex:1"></span><button id="padClose" title="Close (latched pads keep playing)">✕</button></div>
+  <div id="padBar">
+    <label class="inl">Vol <input type="range" id="padVol" min="0" max="1" step="0.01" value="0.9" title="Pad bank volume"></label>
+    <label class="inl" title="How long a latched pad takes to fade out">Fade <input type="number" id="padFade" min="0.1" max="20" step="0.1" value="1.5" style="width:64px;text-align:right"> s</label>
+    <button id="padAll" title="Load one SoundFont onto every pad (each pad can still be changed on its own)">SF2 to all pads</button>
+    <button id="padOctDn" title="Shift every pad down one octave">Oct −</button>
+    <button id="padOctUp" title="Shift every pad up one octave">Oct +</button>
+    <button id="padChrom" title="Reset the notes to C4, C#4, D4 … in order">Chromatic</button>
+    <button id="padStopAll" title="Fade out every latched pad">Fade all</button>
+    <input type="file" id="padAllFile" accept=".sf2" hidden>
+  </div>
+  <div id="padGrid"></div>
+</section>
+<section id="audioPanel" class="pop" hidden>
+  <div class="pHead"><strong>Audio interface</strong><button id="aoClose" title="Close">✕</button></div>
+  <label>Output device <select id="aoOut"></select></label>
+  <label>Input device <select id="aoIn"></select></label>
+  <div class="row">
+    <label class="inl"><input type="checkbox" id="aoOn"> Input on</label>
+    <label class="inl"><input type="checkbox" id="aoMon" disabled> Monitor</label>
+  </div>
+  <label>Input gain <span><input type="range" id="aoGain" min="0" max="2" step="0.01" value="1" style="width:78%"> <output id="aoGainV">100%</output></span></label>
+  <div class="imeter" title="Input level"><i id="aoMeter"></i></div>
+  <dl id="aoInfo"><dt>Sample rate</dt><dd id="aoSr">-</dd><dt>Base latency</dt><dd id="aoBl">-</dd><dt>Output latency</dt><dd id="aoOl">-</dd><dt>Engine</dt><dd id="aoSt">-</dd></dl>
+  <div class="row"><button id="aoTest">Test tone</button><button id="aoScan">Rescan</button></div>
+  <p class="hint" id="aoMsg">Monitoring through speakers can feed back. Use headphones.</p>
+</section>
+<section id="aiPanel" class="pop" hidden>
+  <div class="pHead"><strong>✦ NxtGen AI</strong><span id="aiMode">Offline</span><span style="flex:1"></span>
+    <button id="aiGear" title="AI settings (online mode)">⚙</button><button id="aiClose" title="Close">✕</button></div>
+  <div id="aiSet">
+    <label>API key (Anthropic) <input id="aiKey" type="password" placeholder="sk-ant-…  (saved encrypted, never shown again)" autocomplete="off"></label>
+    <label>Model <input id="aiModel" placeholder="claude-sonnet-5-5"></label>
+    <label>Online voice key (OpenAI, optional) <input id="sttKey" type="password" placeholder="sk-…  (saved encrypted, never shown again)" autocomplete="off"></label>
+    <label>Voice <select id="vSel"><option value="auto">Auto (online when possible)</option><option value="online">Online only</option><option value="offline">Offline only</option></select></label>
+    <div class="row"><button id="vPrep" title="One-time download so voice works with no internet">Download offline voice</button><button id="sttClear">Remove voice key</button></div>
+    <label>Mode <select id="aiSel"><option value="auto">Auto (online when possible)</option><option value="online">Online only</option><option value="offline">Offline only</option></select></label>
+    <div class="row"><button id="aiSave">Save</button><button id="aiClear">Remove key</button></div>
+    <p class="hint">The key is stored encrypted under your account and is only used from the app's background process to reach the AI service.</p>
+  </div>
+  <div id="aiLog" aria-live="polite"></div>
+  <div id="aiChips"></div>
+  <div id="vStat" class="hint" aria-live="polite"></div>
+  <div id="aiRow"><button id="aiMic" title="Click to talk, click again to send (auto-stops after 15 s)">🎤</button><input id="aiIn" placeholder="Ask, or tell me what to do…" autocomplete="off"><button id="aiSend">Send</button></div>
+</section>
+<section id="keyPanel" class="pop" hidden>
+  <div class="pHead"><strong>Keys</strong><span id="keysHint" style="font-size:11px;color:var(--dim);flex:1;margin-left:6px"></span><button id="keysL" aria-label="Scroll left">◀</button><button id="keysR" aria-label="Scroll right">▶</button><button id="keysClose" title="Close">✕</button></div>
+  <div id="pianoScroll"><section id="piano"><span id="pianoOct">Typing octave +0</span></section></div>
+</section>
+<script src="sf2.js"></script>
+<script src="engine.js"></script>
+<script src="app.js"></script>
+<script src="pads.js"></script>
+<script src="audio-io.js"></script>
+<script src="persist.js"></script>
+<script src="ai-brain.js"></script>
+<script src="ai.js"></script>
+</body>
+</html>
